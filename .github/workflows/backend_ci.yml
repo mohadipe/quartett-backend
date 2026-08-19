@@ -1,0 +1,27 @@
+name: Supabase Backend CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-database:
+    name: PostgreSQL Schema & RLS Tests (pgTAP)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase Local Containers
+        run: supabase start
+
+      - name: Run pgTAP Database & RLS Tests
+        run: supabase test db
