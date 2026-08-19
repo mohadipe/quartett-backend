@@ -2,23 +2,27 @@ BEGIN;
 SELECT plan(6);
 
 -- 1. Prüfen, ob alle relevanten Tabellen RLS (Row Level Security) aktiviert haben
-SELECT row_security_is(
-    'public', 'profiles', 'on',
+SELECT results_eq(
+    'SELECT relrowsecurity FROM pg_class WHERE relname = ''profiles'' AND relnamespace = ''public''::regnamespace',
+    ARRAY[true],
     'Tabelle "profiles" muss RLS aktiviert haben'
 );
 
-SELECT row_security_is(
-    'public', 'decks', 'on',
+SELECT results_eq(
+    'SELECT relrowsecurity FROM pg_class WHERE relname = ''decks'' AND relnamespace = ''public''::regnamespace',
+    ARRAY[true],
     'Tabelle "decks" muss RLS aktiviert haben'
 );
 
-SELECT row_security_is(
-    'public', 'matches', 'on',
+SELECT results_eq(
+    'SELECT relrowsecurity FROM pg_class WHERE relname = ''matches'' AND relnamespace = ''public''::regnamespace',
+    ARRAY[true],
     'Tabelle "matches" muss RLS aktiviert haben'
 );
 
-SELECT row_security_is(
-    'public', 'user_inventory_decks', 'on',
+SELECT results_eq(
+    'SELECT relrowsecurity FROM pg_class WHERE relname = ''user_inventory_decks'' AND relnamespace = ''public''::regnamespace',
+    ARRAY[true],
     'Tabelle "user_inventory_decks" muss RLS aktiviert haben'
 );
 
