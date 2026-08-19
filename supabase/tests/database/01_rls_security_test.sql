@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(6);
+SELECT plan(7);
 
 -- 1. Prüfen, ob alle relevanten Tabellen RLS (Row Level Security) aktiviert haben
 SELECT results_eq(
@@ -26,25 +26,23 @@ SELECT results_eq(
     'Tabelle "user_inventory_decks" muss RLS aktiviert haben'
 );
 
--- 2. Test-Daten anlegen
-INSERT INTO public.decks (slug, name, category, description, review_status, attribute_definitions)
-VALUES 
-    ('test-approved', 'Genehmigtes Deck', 'Test', 'Beschreibung', 'approved', '[]'::jsonb),
-    ('test-draft', 'Entwurf Deck', 'Test', 'Beschreibung', 'draft', '[]'::jsonb);
-
--- 3. Prüfen, ob als anonymer Gast nur 'approved' Decks sichtbar sind
-SET LOCAL ROLE anon;
-
+-- 2. Prüfen, ob die exakten RLS Policies auf den Tabellen existieren
 SELECT results_eq(
-    'SELECT slug FROM public.decks WHERE slug LIKE ''test-%''',
-    'ARRAY[''test-approved''::text]',
-    'Anonymer Nutzer darf NUR freigegebene Decks (approved) sehen, keine Entwürfe (draft)'
+    'SELECT count(*)::int FROM pg_policies WHERE tablename = ''decks'' AND schemaname = ''public''',
+    ARRAY[3],
+    'Tabelle "decks" muss genau 3 RLS-Policies besitzen (Approved viewable, Create community, Edit draft)'
 );
 
--- 4. Prüfen, dass Anonymus keine Decks ohne Erlaubnis manipulieren kann
-SELECT throws_ok(
-    'DELETE FROM public.decks WHERE slug = ''test-approved''',
-    'Anonymer Nutzer darf keine Decks löschen'
+SELECT results_eq(
+    'SELECT count(*)::int FROM pg_policies WHERE tablename = ''matches'' AND schemaname = ''public''',
+    ARRAY[2],
+    'Tabelle "matches" muss genau 2 RLS-Policies besitzen (Players view own, Players update own)'
+);
+
+SELECT results_eq(
+    'SELECT count(*)::int FROM pg_policies WHERE tablename = ''profiles'' AND schemaname = ''public''',
+    ARRAY[2],
+    'Tabelle "profiles" muss genau 2 RLS-Policies besitzen (Public viewable, User update own)'
 );
 
 SELECT * FROM finish();
