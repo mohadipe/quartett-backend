@@ -6,6 +6,7 @@
 # Supabase local generated files
 .supabase/
 supabase/.temp/
+supabase/.branches
 
 # Node / Deno (Edge Functions)
 node_modules/
