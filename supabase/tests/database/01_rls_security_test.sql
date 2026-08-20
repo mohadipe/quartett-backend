@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(7);
+SELECT plan(9);
 
 -- 1. Prüfen, ob alle relevanten Tabellen RLS (Row Level Security) aktiviert haben
 SELECT results_eq(
@@ -26,6 +26,12 @@ SELECT results_eq(
     'Tabelle "user_inventory_decks" muss RLS aktiviert haben'
 );
 
+SELECT results_eq(
+    'SELECT relrowsecurity FROM pg_class WHERE relname = ''user_achievements'' AND relnamespace = ''public''::regnamespace',
+    ARRAY[true],
+    'Tabelle "user_achievements" muss RLS aktiviert haben'
+);
+
 -- 2. Prüfen, ob die exakten RLS Policies auf den Tabellen existieren
 SELECT results_eq(
     'SELECT count(*)::int FROM pg_policies WHERE tablename = ''decks'' AND schemaname = ''public''',
@@ -43,6 +49,12 @@ SELECT results_eq(
     'SELECT count(*)::int FROM pg_policies WHERE tablename = ''profiles'' AND schemaname = ''public''',
     ARRAY[2],
     'Tabelle "profiles" muss genau 2 RLS-Policies besitzen (Public viewable, User update own)'
+);
+
+SELECT results_eq(
+    'SELECT count(*)::int FROM pg_policies WHERE tablename = ''user_achievements'' AND schemaname = ''public''',
+    ARRAY[2],
+    'Tabelle "user_achievements" muss genau 2 RLS-Policies besitzen (Users see own, Users add own)'
 );
 
 SELECT * FROM finish();
