@@ -1,8 +1,9 @@
 -- Seed Data: Initial Launch Decks
 
 -- Deck 1: Supercars 2026
-INSERT INTO public.decks (slug, name, category, description, price_coins, is_official, attribute_definitions)
+INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
 VALUES (
+    '00000000-0000-0000-0000-000000000001',
     'supercars-2026',
     'Supercars 2026',
     'Fahrzeuge',
@@ -19,8 +20,9 @@ VALUES (
 ) ON CONFLICT (slug) DO NOTHING;
 
 -- Deck 2: Europäische Schmetterlinge
-INSERT INTO public.decks (slug, name, category, description, price_coins, is_official, attribute_definitions)
+INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
 VALUES (
+    '00000000-0000-0000-0000-000000000002',
     'butterflies-europe',
     'Europäische Schmetterlinge',
     'Natur & Tiere',
