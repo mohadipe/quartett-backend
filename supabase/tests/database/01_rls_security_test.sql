@@ -47,8 +47,8 @@ SELECT results_eq(
 
 SELECT results_eq(
     'SELECT count(*)::int FROM pg_policies WHERE tablename = ''matches'' AND schemaname = ''public''',
-    ARRAY[2],
-    'Tabelle "matches" muss genau 2 RLS-Policies besitzen (Players view own, Players update own)'
+    ARRAY[3],
+    'Tabelle "matches" muss genau 3 RLS-Policies besitzen (Players view own, Players update own, Authenticated insert)'
 );
 
 SELECT results_eq(
