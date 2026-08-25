@@ -20,7 +20,7 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+additional_redirect_urls = ["https://localhost:3000", "http://localhost:*", "http://localhost:*/*"]
 jwt_expiry = 3600
 enable_signup = true
 
@@ -31,6 +31,12 @@ enable_confirmations = false
 
 [auth.anonymous_users]
 enable = true # Erlaubt anonymer Gast-Login ohne Registrierung!
+
+[auth.external.google]
+enabled = true
+client_id = "DEVELOPMENT_CLIENT_ID"
+secret = "DEVELOPMENT_SECRET"
+redirect_uri = "http://localhost:54321/auth/v1/callback"
 
 [storage]
 enabled = true

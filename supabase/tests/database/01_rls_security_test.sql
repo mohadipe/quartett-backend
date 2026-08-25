@@ -41,8 +41,8 @@ SELECT results_eq(
 -- 2. Prüfen, ob die exakten RLS Policies auf den Tabellen existieren
 SELECT results_eq(
     'SELECT count(*)::int FROM pg_policies WHERE tablename = ''decks'' AND schemaname = ''public''',
-    ARRAY[3],
-    'Tabelle "decks" muss genau 3 RLS-Policies besitzen (Approved viewable, Create community, Edit draft)'
+    ARRAY[4],
+    'Tabelle "decks" muss genau 4 RLS-Policies besitzen (Approved viewable, Create community, Edit draft, Delete draft)'
 );
 
 SELECT results_eq(

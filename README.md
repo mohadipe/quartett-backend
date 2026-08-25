@@ -54,3 +54,6 @@ npx supabase db reset
 npx supabase link --project-ref <your-project-id>
 npx supabase db push
 ```
+npx supabase login
+npx supabase init
+npx supabase link --project-ref cekxkfrveyhoykfqswnp

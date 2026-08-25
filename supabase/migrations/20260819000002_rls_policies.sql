@@ -24,7 +24,8 @@ WITH CHECK (auth.uid() = creator_id);
 
 CREATE POLICY "Creators can edit their own draft decks"
 ON public.decks FOR UPDATE
-USING (auth.uid() = creator_id AND review_status = 'draft');
+USING (auth.uid() = creator_id)
+WITH CHECK (auth.uid() = creator_id AND review_status IN ('draft', 'approved'));
 
 -- Cards
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
