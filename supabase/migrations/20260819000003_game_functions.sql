@@ -55,3 +55,82 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 3. Gast-Account Daten-Merge nach OAuth-Registrierung
+CREATE OR REPLACE FUNCTION public.rpc_merge_guest_data(p_guest_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    v_new_user_id UUID := auth.uid();
+    v_guest_coins INT;
+    v_guest_xp INT;
+    v_new_coins INT;
+    v_new_xp INT;
+    v_new_level INT;
+BEGIN
+    IF v_new_user_id IS NULL THEN
+        RAISE EXCEPTION 'Nicht authentifiziert';
+    END IF;
+
+    IF v_new_user_id = p_guest_id THEN
+        RETURN jsonb_build_object('success', true, 'message', 'IDs sind identisch, kein Merge nötig');
+    END IF;
+
+    -- 1. Gast-Profil Daten holen
+    SELECT coins, xp INTO v_guest_coins, v_guest_xp
+    FROM public.profiles
+    WHERE id = p_guest_id;
+
+    IF v_guest_coins IS NULL THEN
+        -- Kein Gast-Profil gefunden, breche ab
+        RETURN jsonb_build_object('success', false, 'message', 'Gast-Profil nicht gefunden');
+    END IF;
+
+    -- 2. Münzen und XP übertragen
+    -- Startmünzen (100) vom Gast abziehen, falls er sie noch hat, sonst nur die Netto-Münzen übertragen
+    UPDATE public.profiles
+    SET
+        coins = coins + GREATEST(0, v_guest_coins - 100),
+        xp = xp + v_guest_xp,
+        level = 1 + FLOOR((xp + v_guest_xp) / 500),
+        updated_at = now()
+    WHERE id = v_new_user_id
+    RETURNING coins, xp, level INTO v_new_coins, v_new_xp, v_new_level;
+
+    -- 3. Matches auf neuen User umschreiben
+    UPDATE public.matches
+    SET host_id = v_new_user_id
+    WHERE host_id = p_guest_id;
+
+    UPDATE public.matches
+    SET guest_id = v_new_user_id
+    WHERE guest_id = p_guest_id;
+
+    UPDATE public.matches
+    SET winner_user_id = v_new_user_id
+    WHERE winner_user_id = p_guest_id;
+
+    -- 4. Achievements auf neuen User übertragen
+    INSERT INTO public.user_achievements (user_id, achievement_id, unlocked_at)
+    SELECT v_new_user_id, achievement_id, unlocked_at
+    FROM public.user_achievements
+    WHERE user_id = p_guest_id
+    ON CONFLICT (user_id, achievement_id) DO NOTHING;
+
+    -- 5. Inventar/Decks auf neuen User übertragen
+    INSERT INTO public.user_inventory_decks (user_id, deck_id, unlocked_at)
+    SELECT v_new_user_id, deck_id, unlocked_at
+    FROM public.user_inventory_decks
+    WHERE user_id = p_guest_id
+    ON CONFLICT (user_id, deck_id) DO NOTHING;
+
+    -- 6. Gast-Profil in public.profiles löschen
+    DELETE FROM public.profiles WHERE id = p_guest_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'coins', v_new_coins,
+        'xp', v_new_xp,
+        'level', v_new_level
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
