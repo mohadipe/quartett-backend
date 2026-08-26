@@ -62,3 +62,11 @@ ALTER TABLE public.friendships ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see their friendships"
 ON public.friendships FOR SELECT
 USING (auth.uid() = user_id OR auth.uid() = friend_id);
+
+-- Purchase Receipts
+ALTER TABLE public.purchase_receipts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see only own purchase receipts"
+ON public.purchase_receipts FOR SELECT
+USING (auth.uid() = user_id);
+
