@@ -1,11 +1,16 @@
--- Seed Data: Initial Launch Decks
+-- Migration: Clean up and ensure 3 official launch decks with consistent UUIDs, slugs, and prices
 
--- 0. Cleanup eventueller Altlasten oder abweichender Slugs
+-- 1. Deduplizierung: Bereinigen veralteter Slugs
 DELETE FROM public.decks 
 WHERE slug = 'feuerwehr-einsatzfahrzeuge' 
   AND id != '00000000-0000-0000-0000-000000000003';
 
--- Deck 1: Supercars 2026
+UPDATE public.decks
+SET slug = 'feuerwehr-einsatz'
+WHERE slug = 'feuerwehr-einsatzfahrzeuge'
+  AND id = '00000000-0000-0000-0000-000000000003';
+
+-- 2. Deck 1: Supercars 2026
 INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
@@ -31,7 +36,7 @@ VALUES (
     is_official = EXCLUDED.is_official,
     attribute_definitions = EXCLUDED.attribute_definitions;
 
--- Deck 2: Europäische Schmetterlinge
+-- 3. Deck 2: Europäische Schmetterlinge
 INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
 VALUES (
     '00000000-0000-0000-0000-000000000002',
@@ -57,7 +62,7 @@ VALUES (
     is_official = EXCLUDED.is_official,
     attribute_definitions = EXCLUDED.attribute_definitions;
 
--- Deck 3: Klassische Feuerwehr
+-- 4. Deck 3: Klassische Feuerwehr
 INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
 VALUES (
     '00000000-0000-0000-0000-000000000003',
