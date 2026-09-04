@@ -82,3 +82,30 @@ VALUES (
     price_coins = EXCLUDED.price_coins,
     is_official = EXCLUDED.is_official,
     attribute_definitions = EXCLUDED.attribute_definitions;
+
+-- Deck 4: Prototypen-Hypercars (Premium)
+INSERT INTO public.decks (id, slug, name, category, description, price_coins, is_official, attribute_definitions)
+VALUES (
+    '00000000-0000-0000-0000-000000000004',
+    'prototypen-hypercars',
+    'Prototypen-Hypercars',
+    'Fahrzeuge',
+    'Zukunftsvisionen, Rekordjäger und Technologieträger der extremsten Konzept-Hypercars.',
+    750,
+    true,
+    '[
+        {"key": "power_hp", "label": "Systemleistung", "unit": "PS", "is_higher_better": true, "format": "integer", "icon_name": "flash"},
+        {"key": "vmax", "label": "Höchstgeschwindigkeit", "unit": "km/h", "is_higher_better": true, "format": "integer", "icon_name": "flag"},
+        {"key": "accel_0_100", "label": "0–100 km/h", "unit": "s", "is_higher_better": false, "format": "decimal", "icon_name": "speed"},
+        {"key": "battery_kwh", "label": "Akkukapazität", "unit": "kWh", "is_higher_better": true, "format": "integer", "icon_name": "battery"},
+        {"key": "weight_kg", "label": "Leergewicht", "unit": "kg", "is_higher_better": false, "format": "integer", "icon_name": "weight"}
+    ]'::JSONB
+) ON CONFLICT (id) DO UPDATE SET
+    slug = EXCLUDED.slug,
+    name = EXCLUDED.name,
+    category = EXCLUDED.category,
+    description = EXCLUDED.description,
+    price_coins = EXCLUDED.price_coins,
+    is_official = EXCLUDED.is_official,
+    attribute_definitions = EXCLUDED.attribute_definitions;
+
