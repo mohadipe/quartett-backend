@@ -65,7 +65,11 @@ jobs:
           fi
 
           echo "🔗 Linking to Supabase Staging project ($SUPABASE_PROJECT_REF_STAGING)..."
-          supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING"
+          if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING" --password "$SUPABASE_DB_PASSWORD"
+          else
+            supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING"
+          fi
 
           echo "📤 Applying migrations via supabase db push..."
           set -o pipefail
@@ -142,7 +146,11 @@ jobs:
           fi
 
           echo "🔗 Linking to Supabase Production project ($SUPABASE_PROJECT_REF_PROD)..."
-          supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD"
+          if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD" --password "$SUPABASE_DB_PASSWORD"
+          else
+            supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD"
+          fi
 
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           BACKUP_DIR="backups/prod_${TIMESTAMP}"
