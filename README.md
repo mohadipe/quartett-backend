@@ -16,7 +16,10 @@ Backend- und Cloud-Infrastruktur Repository für die **Quartett & Supertrumpf Ap
 ```
 quartett-backend/
 ├── .github/workflows/
-│   └── backend_ci.yml        # Automatisierte pgTAP Tests bei GitHub Push
+│   ├── backend_ci.yml        # Automatisierte pgTAP Tests bei Pull Request & Push
+│   └── deploy_backend.yml    # CI/CD Release-Pipeline für Staging & Production
+├── tests/
+│   └── test_deploy_backend_workflow.py # Testsuite für die CI/CD Pipeline
 └── supabase/
     ├── config.toml           # Supabase CLI Konfiguration
     ├── migrations/           # SQL Tabellen, RLS Policies & RPC Funktionen
@@ -25,7 +28,8 @@ quartett-backend/
     │   └── 20260819000003_game_functions.sql
     ├── tests/database/       # pgTAP SQL Test-Suites
     │   ├── 01_rls_security_test.sql
-    │   └── 02_triggers_and_rpc_test.sql
+    │   ├── 02_triggers_and_rpc_test.sql
+    │   └── 04_official_decks_and_seeds_test.sql
     ├── functions/            # Edge Functions (IAP Belegprüfung & Matchmaking)
     └── seed.sql              # Initialer Decks- und Karten-Katalog
 ```
@@ -49,11 +53,36 @@ npx supabase test db
 npx supabase db reset
 ```
 
-### 4. Remote Cloud Deployment:
-```bash
-npx supabase link --project-ref <your-project-id>
-npx supabase db push
-```
-npx supabase login
-npx supabase init
-npx supabase link --project-ref cekxkfrveyhoykfqswnp
+---
+
+## 🚀 Automatisierte CI/CD Deployment-Pipeline (`deploy_backend.yml`)
+
+Das Backend wird über GitHub Actions vollautomatisiert und unabhängig vom Frontend deployt:
+
+### 🟡 Staging (`quartett-stage`)
+* **Trigger:** Automatischer Push auf den `main`-Branch ODER manueller Start via `workflow_dispatch` mit Umgebung `staging`.
+* **Ablauf:**
+  1. Supabase CLI Setup & Container-Start.
+  2. Ausführung der vollständigen pgTAP-Testsuite (`supabase test db`).
+  3. Verifikation der RLS-Sicherheitsabdeckung.
+  4. Bei erfolgreichen Tests: Automatisches Aufspielen aller Migrationen via `supabase db push --project-ref $SUPABASE_PROJECT_REF_STAGING`.
+  5. Step Summary im GitHub Actions Run mit Status der angewendeten Migrationen.
+
+### 🔴 Production (`quartett-prod`)
+* **Trigger:** Git-Tag `backend-v*` (z. B. `backend-v0.2.0`) ODER manueller Start via `workflow_dispatch` mit Umgebung `production`.
+* **Ablauf:**
+  1. Supabase CLI Setup & Container-Start.
+  2. Ausführung der vollständigen pgTAP-Testsuite (`supabase test db`).
+  3. **Automatisiertes Backup:** Vollständiger Schema- & Daten-Dump der Produktionsdatenbank vor Anwendung jeglicher Migrationen.
+  4. **Artifact-Archivierung:** Speicherung des Backups als GitHub Actions Run Artifact mit 90 Tagen Aufbewahrungsdauer.
+  5. **Sicheres Deployment:** Aufspielen aller offenen Migrationen via `supabase db push --project-ref $SUPABASE_PROJECT_REF_PROD`.
+  6. Detaillierte Step Summary mit Backup- und Migrationsstatus.
+
+### 🔐 Erforderliche GitHub Secrets & Variablen
+| Secret / Variable | Beschreibung |
+| :--- | :--- |
+| `SUPABASE_ACCESS_TOKEN` | Supabase Personal Access Token für die CLI |
+| `SUPABASE_PROJECT_REF_STAGING` | Projekt-Referenz-ID für Staging (`quartett-stage`) |
+| `SUPABASE_DB_PASSWORD_STAGING` | Datenbankpasswort für die Staging-Instanz |
+| `SUPABASE_PROJECT_REF_PROD` | Projekt-Referenz-ID für Production (`quartett-prod`) |
+| `SUPABASE_DB_PASSWORD_PROD` | Datenbankpasswort für die Production-Instanz |
