@@ -33,6 +33,15 @@ DO $$ BEGIN
         ON public.user_cosmetics FOR INSERT
         WITH CHECK (auth.uid() = user_id);
     END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE tablename = 'user_cosmetics' AND policyname = 'Users can update own cosmetics'
+    ) THEN
+        CREATE POLICY "Users can update own cosmetics"
+        ON public.user_cosmetics FOR UPDATE
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+    END IF;
 END $$;
 
 -- 3. Atomare Kauf-Funktion für kosmetische Upgrades
@@ -46,6 +55,12 @@ DECLARE
     v_user_id UUID := auth.uid();
     v_current_coins INT;
     v_already_owned BOOLEAN;
+    v_item_type TEXT := CASE
+        WHEN p_item_type = 'cardBack' THEN 'card_back'
+        WHEN p_item_type = 'cardFoil' THEN 'card_foil'
+        WHEN p_item_type = 'avatarFrame' THEN 'avatar_frame'
+        ELSE p_item_type
+    END;
 BEGIN
     IF v_user_id IS NULL THEN
         RAISE EXCEPTION 'Nicht authentifiziert';
@@ -58,7 +73,7 @@ BEGIN
     -- 1. Prüfen, ob Item bereits freigeschaltet ist
     SELECT EXISTS (
         SELECT 1 FROM public.user_cosmetics
-        WHERE user_id = v_user_id AND item_type = p_item_type AND item_id = p_item_id
+        WHERE user_id = v_user_id AND item_type = v_item_type AND item_id = p_item_id
     ) INTO v_already_owned;
 
     IF v_already_owned THEN
@@ -67,7 +82,7 @@ BEGIN
             'success', true,
             'already_owned', true,
             'coins', v_current_coins,
-            'item_type', p_item_type,
+            'item_type', v_item_type,
             'item_id', p_item_id,
             'message', 'Bereits im Besitz'
         );
@@ -88,10 +103,10 @@ BEGIN
 
     -- 4. Kosmetik-Item freischalten
     INSERT INTO public.user_cosmetics (user_id, item_type, item_id, unlocked_at)
-    VALUES (v_user_id, p_item_type, p_item_id, now());
+    VALUES (v_user_id, v_item_type, p_item_id, now());
 
     -- Falls es sich um einen Kartenrücken handelt, diesen direkt als aktiven Kartenrücken setzen
-    IF p_item_type = 'card_back' THEN
+    IF v_item_type = 'card_back' THEN
         UPDATE public.profiles
         SET active_card_back_id = p_item_id,
             updated_at = now()
@@ -102,7 +117,7 @@ BEGIN
         'success', true,
         'already_owned', false,
         'coins', v_current_coins,
-        'item_type', p_item_type,
+        'item_type', v_item_type,
         'item_id', p_item_id
     );
 END;

@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(10);
+SELECT plan(12);
 
 -- 1. Tabelle public.user_cosmetics existiert
 SELECT has_table('public', 'user_cosmetics', 'Tabelle public.user_cosmetics muss existieren');
@@ -43,6 +43,18 @@ SELECT results_eq(
     'SELECT coins, active_card_back_id FROM public.profiles WHERE id = ''22222222-2222-2222-2222-222222222222''',
     $$VALUES (150, 'card_back_carbon')$$,
     'Profil muss nach Kauf 150 Coins und active_card_back_id card_back_carbon haben'
+);
+
+-- 8. Kauf mit camelCase cardBack testen (für 100 Coins, rest 50)
+SELECT lives_ok(
+    'SELECT public.rpc_purchase_cosmetic(''cardBack'', ''card_back_retro'', 100)',
+    'Kauf von card_back_retro mit camelCase cardBack muss normalisiert werden'
+);
+
+SELECT results_eq(
+    'SELECT coins, active_card_back_id FROM public.profiles WHERE id = ''22222222-2222-2222-2222-222222222222''',
+    $$VALUES (50, 'card_back_retro')$$,
+    'Profil muss nach weiterem Kauf 50 Coins und active_card_back_id card_back_retro haben'
 );
 
 SELECT * FROM finish();
