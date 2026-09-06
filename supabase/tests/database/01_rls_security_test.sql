@@ -59,8 +59,8 @@ SELECT results_eq(
 
 SELECT results_eq(
     'SELECT count(*)::int FROM pg_policies WHERE tablename = ''user_achievements'' AND schemaname = ''public''',
-    ARRAY[2],
-    'Tabelle "user_achievements" muss genau 2 RLS-Policies besitzen (Users see own, Users add own)'
+    ARRAY[3],
+    'Tabelle "user_achievements" muss genau 3 RLS-Policies besitzen (Users see own, Users add own, Users update own)'
 );
 
 SELECT results_eq(
