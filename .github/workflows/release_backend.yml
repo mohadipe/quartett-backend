@@ -1,0 +1,127 @@
+name: "🚀 Automated Backend Release & Versioning"
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Versionssprung (SemVer: patch, minor, major, auto, custom)"
+        required: true
+        type: choice
+        default: "patch"
+        options:
+          - patch
+          - minor
+          - major
+          - auto
+          - custom
+      custom_version:
+        description: "Spezifische Zielversion (nur bei bump_type 'custom', z. B. 1.0.0)"
+        required: false
+        type: string
+        default: ""
+      custom_notes:
+        description: "Zusätzliche Release Notes / Bemerkungen (optional)"
+        required: false
+        type: string
+        default: ""
+      trigger_deploy:
+        description: "Automatisches Auslösen der Production Deployment Pipeline (deploy_backend.yml)"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    name: "🚀 Release & Version Backend"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout Repository (Full History)"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🐍 Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: "⚡ Setup Supabase CLI"
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: "🐳 Start Supabase Local Containers"
+        run: supabase start
+
+      - name: "🧪 Run pgTAP Database & RLS Tests"
+        run: supabase test db
+
+      - name: "🧪 Run Workflow & Script Unit Tests"
+        run: python3 -m unittest discover tests
+
+      - name: "📊 Generate Backend Security & Coverage Summary"
+        run: ./scripts/generate_backend_summary.sh >> $GITHUB_STEP_SUMMARY
+
+      - name: "🔢 Calculate Semantic Version & Next Tag"
+        id: versioning
+        run: |
+          python3 scripts/generate_release_changelog.py bump \
+            --bump-type "${{ github.event.inputs.bump_type }}" \
+            --custom-version "${{ github.event.inputs.custom_version }}"
+
+      - name: "📝 Generate Release Notes & Changelog"
+        id: changelog
+        run: |
+          python3 scripts/generate_release_changelog.py changelog \
+            --version "${{ steps.versioning.outputs.new_version }}" \
+            --prev-tag "${{ steps.versioning.outputs.prev_tag }}" \
+            --custom-notes "${{ github.event.inputs.custom_notes }}" \
+            --output CHANGELOG_RELEASE.md
+
+          # Summary for GitHub Actions Run
+          cat CHANGELOG_RELEASE.md >> $GITHUB_STEP_SUMMARY
+
+      - name: "🏷️ Create & Push Annotated Git Tag"
+        id: tag_push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          TAG_NAME="${{ steps.versioning.outputs.new_tag }}"
+          echo "Creating annotated tag: ${TAG_NAME}..."
+          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+          echo "✅ Tag ${TAG_NAME} successfully pushed to origin."
+
+      - name: "🎉 Publish Official GitHub Release"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versioning.outputs.new_tag }}
+          name: "🚀 quartett-backend ${{ steps.versioning.outputs.new_tag }}"
+          body_path: CHANGELOG_RELEASE.md
+          draft: false
+          prerelease: false
+
+      - name: "🚀 Trigger Production Deployment Pipeline (deploy_backend.yml)"
+        if: github.event.inputs.trigger_deploy == true || github.event.inputs.trigger_deploy == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.versioning.outputs.new_tag }}"
+          echo "Triggering deploy_backend.yml for tag ${TAG_NAME} with environment=production..."
+          gh workflow run deploy_backend.yml \
+            --ref "${TAG_NAME}" \
+            -f environment=production
+
+          echo "✅ deploy_backend.yml triggered successfully for ${TAG_NAME} on production."
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Production Deployment Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** \`deploy_backend.yml\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Environment:** \`production\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git Tag:** \`${TAG_NAME}\`" >> $GITHUB_STEP_SUMMARY
