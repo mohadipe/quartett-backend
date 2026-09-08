@@ -21,10 +21,13 @@ quartett-backend/
 │   └── release_backend.yml   # Automatisierte Versionierung & Release-Pipeline
 ├── scripts/
 │   ├── generate_backend_summary.sh     # RLS & Testabdeckungs-Report
-│   └── generate_release_changelog.py   # SemVer Bumping & Conventional Changelog Generator
+│   ├── generate_release_changelog.py   # SemVer Bumping & Conventional Changelog Generator
+│   ├── smoke_test_production.py        # Automatisierter Production Smoke-Test & Katalog-Validierung
+│   └── smoke_test_production.sh        # Shell-Runner für Production Smoke-Tests
 ├── tests/
 │   ├── test_deploy_backend_workflow.py    # Testsuite für die CI/CD Pipeline
 │   ├── test_generate_release_changelog.py # Testsuite für Versionierung & Changelog
+│   ├── test_production_seed.py            # Testsuite für Production Seed & Smoke-Test
 │   └── test_release_backend_workflow.py   # Testsuite für den Release-Workflow
 └── supabase/
     ├── config.toml           # Supabase CLI Konfiguration
@@ -35,9 +38,11 @@ quartett-backend/
     ├── tests/database/       # pgTAP SQL Test-Suites
     │   ├── 01_rls_security_test.sql
     │   ├── 02_triggers_and_rpc_test.sql
-    │   └── 04_official_decks_and_seeds_test.sql
+    │   ├── 04_official_decks_and_seeds_test.sql
+    │   └── 09_production_seed_smoke_test.sql
     ├── functions/            # Edge Functions (IAP Belegprüfung & Matchmaking)
-    └── seed.sql              # Initialer Decks- und Karten-Katalog
+    ├── seed.sql              # Initialer Decks- und Karten-Katalog (Dev)
+    └── seed_official_decks.sql # Offizieller Launch-Seed & Test-Bereinigung (Prod)
 ```
 
 ---
@@ -82,7 +87,22 @@ Das Backend wird über GitHub Actions vollautomatisiert und unabhängig vom Fron
   3. **Automatisiertes Backup:** Vollständiger Schema- & Daten-Dump der Produktionsdatenbank vor Anwendung jeglicher Migrationen.
   4. **Artifact-Archivierung:** Speicherung des Backups als GitHub Actions Run Artifact mit 90 Tagen Aufbewahrungsdauer.
   5. **Sicheres Deployment:** Aufspielen aller offenen Migrationen via `supabase db push --project-ref $SUPABASE_PROJECT_REF_PROD`.
-  6. Detaillierte Step Summary mit Backup- und Migrationsstatus.
+  6. **Automatischer Smoke-Test:** Validierung von 0 % Test-Artefakten und vollständigen Launch-Katalogen (`smoke_test_production.py`).
+  7. Detaillierte Step Summary mit Backup-, Migrations- und Smoke-Test-Status.
+
+### 🛡️ Initialer Production-Seed & Smoke-Test (`STORY-010D / #14`)
+
+Für die Bereitstellung und Bereinigung einer Produktions- oder Staging-Instanz:
+1. **Initialer Katalog-Seed & Bereinigung:**
+   ```bash
+   # Bereinigt Test-Accounts und spielt ausschließlich offizielle Launch-Kataloge ein
+   npx supabase db query --project-ref $SUPABASE_PROJECT_REF_PROD --file supabase/seed_official_decks.sql
+   ```
+2. **Automatisierter Smoke-Test & Integritätsprüfung:**
+   ```bash
+   # Validiert 0 % Test-Artefakte, korrekte Attribute und Preise
+   ./scripts/smoke_test_production.sh production
+   ```
 
 ### 🚀 Automatisierter Release- & Versionierungs-Workflow (`release_backend.yml`)
 
