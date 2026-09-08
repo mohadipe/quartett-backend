@@ -1,12 +1,18 @@
 import os
 import unittest
-import yaml
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 WORKFLOW_PATH = os.path.join(
     os.path.dirname(__file__), "..", ".github", "workflows", "release_backend.yml"
 )
 
 
+@unittest.skipUnless(HAS_YAML, "PyYAML (pip install pyyaml) is required to test GitHub Actions workflows")
 class TestReleaseBackendWorkflow(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
