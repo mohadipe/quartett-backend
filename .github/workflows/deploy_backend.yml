@@ -44,6 +44,9 @@ jobs:
       - name: "🐳 Start Supabase Local Containers"
         run: supabase start
 
+      - name: "📜 Run pgTAP Contract Regression Tests (v1 & v2)"
+        run: supabase test db supabase/tests/contracts
+
       - name: "🧪 Run pgTAP Database & RLS Tests"
         run: supabase test db
 
@@ -125,6 +128,9 @@ jobs:
 
       - name: "🐳 Start Supabase Local Containers"
         run: supabase start
+
+      - name: "📜 Run pgTAP Contract Regression Tests (v1 & v2)"
+        run: supabase test db supabase/tests/contracts
 
       - name: "🧪 Run pgTAP Database & RLS Tests"
         run: supabase test db

@@ -80,13 +80,12 @@ Alle serverseitigen Stored Procedures tragen ein Versionssuffix `_v1`:
 ### Regel 4: Unversionierte Legacy-Wrapper beibehalten
 * Für bestehende Endpunkte bleiben unversionierte Stored Procedures (`rpc_claim_match_reward`, `rpc_purchase_cosmetic` etc.) als Adapter erhalten, die intern auf die Version `_v1` verweisen.
 
-### Regel 5: Testpflicht vor jedem Merge (pgTAP Contract-Tests)
+### Regel 5: Testpflicht vor jedem Merge (pgTAP Contract-Regressionstests)
 * Jede Änderung am Backend muss durch die pgTAP-Testsuite abgesichert sein.
-* `supabase/tests/database/08_contract_facade_v1_test.sql` prüft:
-  1. Existenz aller `v1_*`-Views und `*_v1`-RPCs.
-  2. Funktionierende Lese- und Schreibzugriffe über die Views.
-  3. Abwärtskompatibilität bei Schema-Erweiterungen (Expand-Test).
-* **100 % aller pgTAP-Tests müssen lokal und in der GitHub Actions CI grün sein!**
+* Dedizierte Contract-Regressionstests in `supabase/tests/contracts/`:
+  1. `test_contract_v1.sql`: Prüft alle 15 Facade-Views, exakten Spaltenprojektionen (`columns_are`), Datentypen (`col_type_is`), 15 versionierten RPC-Funktionen (`has_function`, `function_returns`), `security_invoker=true` und F1-Client Runtime-Interaktionen.
+  2. `test_contract_v2.sql`: Prüft additive Schema-Erweiterungen (Expand-Pattern), Multi-Contract Coexistenz (`v1` + `v2` parallel) sowie **Negativ-Tests** (Abweisung von Pflichtfeldern ohne Default via 23502, Postgres-Blockade von DROP COLUMN via 2BP01 und ALTER TYPE via 0A000, Typvalidierung via 22P02, lückenlose RLS-Absicherung).
+* **100 % aller pgTAP-Tests müssen lokal und in der GitHub Actions CI (PR, Staging- und Production-Deploy) grün sein!**
 
 ---
 
