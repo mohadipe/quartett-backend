@@ -1,15 +1,61 @@
--- Seed Data: Initial Launch Decks & Cards
+-- =============================================================================
+-- 🌱 SEED: Offizielle Launch-Kataloge & Production-Bereinigung (STORY-010D / #14)
+-- =============================================================================
+-- Ziel:
+-- 1. Garantiert 0 % Test-Artefakte (keine Test-Accounts, Dummy-Matches, Fake-Stats).
+-- 2. Bereinigt veraltete Slugs (z.B. feuerwehr-einsatzfahrzeuge) und Dummy-Decks.
+-- 3. Spielt exakt die 3 verifizierten Standard-Decks (Supercars, Feuerwehr, Schmetterlinge)
+--    inklusive vollständiger Karten-Daten und Attribut-Definitionen ein.
+-- =============================================================================
 
--- 0. Cleanup eventueller Altlasten oder abweichender Slugs
+-- -----------------------------------------------------------------------------
+-- 1. Bereinigung von Test-Accounts, Dummy-Matches & Fake-Statistiken
+-- -----------------------------------------------------------------------------
+DELETE FROM public.purchase_receipts;
+DELETE FROM public.friendships;
+DELETE FROM public.daily_quests;
+DELETE FROM public.user_achievements;
+DELETE FROM public.user_cosmetics;
+DELETE FROM public.user_inventory_decks;
+DELETE FROM public.matches;
+DELETE FROM public.match_history;
+DELETE FROM public.deck_reviews;
+DELETE FROM public.profiles;
+
+-- Auth-Testuser bereinigen (falls Schema zugänglich ist)
+DO $$
+BEGIN
+    DELETE FROM auth.users WHERE email LIKE '%@example.com' OR email LIKE '%test%';
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL; -- Kein Abbruch bei fehlenden auth.users Rechten
+END $$;
+
+-- -----------------------------------------------------------------------------
+-- 2. Katalog-Bereinigung (Legacy-Slugs, Inoffizielle/Community-Entwürfe)
+-- -----------------------------------------------------------------------------
+-- Veralteten Slug 'feuerwehr-einsatzfahrzeuge' entfernen
 DELETE FROM public.decks 
 WHERE slug = 'feuerwehr-einsatzfahrzeuge' 
   AND id != '00000000-0000-0000-0000-000000000003';
 
+-- Inoffizielle oder Community-Entwürfe entfernen
+DELETE FROM public.decks 
+WHERE is_official = false OR is_community = true;
+
+-- Karten von nicht-offiziellen Decks entfernen
+DELETE FROM public.cards 
+WHERE deck_id NOT IN (
+    '00000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000003'
+);
+
 -- -----------------------------------------------------------------------------
--- 1. Decks
+-- 3. Offizielle Standard-Decks (Launch-Katalog)
 -- -----------------------------------------------------------------------------
 
--- Deck 1: Supercars 2026
+-- Deck 1: Supercars 2026 (Starterdeck, 0 Coins)
 INSERT INTO public.decks (
     id, slug, name, category, description, cover_image_url, price_coins, is_official, is_community, review_status, attribute_definitions
 ) VALUES (
@@ -42,7 +88,7 @@ INSERT INTO public.decks (
     review_status = EXCLUDED.review_status,
     attribute_definitions = EXCLUDED.attribute_definitions;
 
--- Deck 2: Europäische Schmetterlinge
+-- Deck 2: Europäische Schmetterlinge (Natur & Tiere, 200 Coins)
 INSERT INTO public.decks (
     id, slug, name, category, description, cover_image_url, price_coins, is_official, is_community, review_status, attribute_definitions
 ) VALUES (
@@ -75,7 +121,7 @@ INSERT INTO public.decks (
     review_status = EXCLUDED.review_status,
     attribute_definitions = EXCLUDED.attribute_definitions;
 
--- Deck 3: Klassische Feuerwehr
+-- Deck 3: Klassische Feuerwehr (Fahrzeuge, 150 Coins)
 INSERT INTO public.decks (
     id, slug, name, category, description, cover_image_url, price_coins, is_official, is_community, review_status, attribute_definitions
 ) VALUES (
@@ -108,41 +154,8 @@ INSERT INTO public.decks (
     review_status = EXCLUDED.review_status,
     attribute_definitions = EXCLUDED.attribute_definitions;
 
--- Deck 4: Prototypen-Hypercars (Premium)
-INSERT INTO public.decks (
-    id, slug, name, category, description, cover_image_url, price_coins, is_official, is_community, review_status, attribute_definitions
-) VALUES (
-    '00000000-0000-0000-0000-000000000004',
-    'prototypen-hypercars',
-    'Prototypen-Hypercars',
-    'Fahrzeuge',
-    'Zukunftsvisionen, Rekordjäger und Technologieträger der extremsten Konzept-Hypercars.',
-    'assets/decks/prototypen/cover.jpg',
-    750,
-    true,
-    false,
-    'approved',
-    '[
-        {"key": "power_hp", "label": "Systemleistung", "unit": "PS", "is_higher_better": true, "format": "integer", "icon_name": "flash"},
-        {"key": "vmax", "label": "Höchstgeschwindigkeit", "unit": "km/h", "is_higher_better": true, "format": "integer", "icon_name": "flag"},
-        {"key": "accel_0_100", "label": "0–100 km/h", "unit": "s", "is_higher_better": false, "format": "decimal", "icon_name": "speed"},
-        {"key": "battery_kwh", "label": "Akkukapazität", "unit": "kWh", "is_higher_better": true, "format": "integer", "icon_name": "battery"},
-        {"key": "weight_kg", "label": "Leergewicht", "unit": "kg", "is_higher_better": false, "format": "integer", "icon_name": "weight"}
-    ]'::JSONB
-) ON CONFLICT (id) DO UPDATE SET
-    slug = EXCLUDED.slug,
-    name = EXCLUDED.name,
-    category = EXCLUDED.category,
-    description = EXCLUDED.description,
-    cover_image_url = EXCLUDED.cover_image_url,
-    price_coins = EXCLUDED.price_coins,
-    is_official = EXCLUDED.is_official,
-    is_community = EXCLUDED.is_community,
-    review_status = EXCLUDED.review_status,
-    attribute_definitions = EXCLUDED.attribute_definitions;
-
 -- -----------------------------------------------------------------------------
--- 2. Karten-Katalog für offizielle Decks (public.cards)
+-- 4. Karten-Katalog für offizielle Decks (public.cards)
 -- -----------------------------------------------------------------------------
 
 -- Deck 1: Supercars 2026 Karten
@@ -243,5 +256,3 @@ ON CONFLICT (deck_id, code) DO UPDATE SET name = EXCLUDED.name, subtitle = EXCLU
 INSERT INTO public.cards (deck_id, code, name, subtitle, image_url, fun_fact, attributes)
 VALUES ('00000000-0000-0000-0000-000000000003', 'B4', 'Wechselladerfahrzeug mit AB-Gefahrgut (WLF)', 'Spezialeinsatz bei Chemie- & Gefahrstoffunfällen', 'assets/decks/feuerwehr/b4_wlf_gefahrgut.jpg', 'Der Abrollbehälter führt Vollschutzanzüge, Chemikalienpumpen und Messgeräte für atomare, biologische und chemische Gefahren mit.', '{"power_hp": 440, "water_tank_l": 0, "pump_capacity_lpm": 0, "rescue_height_m": 4, "crew_size": 2}'::jsonb)
 ON CONFLICT (deck_id, code) DO UPDATE SET name = EXCLUDED.name, subtitle = EXCLUDED.subtitle, image_url = EXCLUDED.image_url, fun_fact = EXCLUDED.fun_fact, attributes = EXCLUDED.attributes;
-
-

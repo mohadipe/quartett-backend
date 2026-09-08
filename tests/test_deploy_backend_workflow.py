@@ -170,7 +170,13 @@ class TestDeployBackendWorkflow(unittest.TestCase):
             "Production deploy must execute supabase db push.",
         )
 
-        # 5. Step Summary
+        # 5. Production Smoke Test Step
+        self.assertTrue(
+            any("smoke_test_production.py" in run for run in step_runs),
+            "Production job must execute smoke_test_production.py.",
+        )
+
+        # 6. Step Summary
         self.assertTrue(
             any("GITHUB_STEP_SUMMARY" in run for run in step_runs),
             "Production job must write status to GITHUB_STEP_SUMMARY.",

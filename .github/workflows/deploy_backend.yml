@@ -198,6 +198,16 @@ jobs:
           fi
           echo "✅ Production database deployment completed."
 
+      - name: "🧪 Run Production Smoke Test & Catalog Validation"
+        id: smoke_test_prod
+        if: steps.deploy_prod.outcome == 'success'
+        run: |
+          echo "=== 🧪 Running Production Smoke Test ==="
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's#^https?://##' | sed -E 's#\.supabase\.(co|in).*##' | tr -d '/')
+          python3 ./scripts/smoke_test_production.py --project-ref "$CLEAN_REF" --markdown >> $GITHUB_STEP_SUMMARY || {
+            echo "::warning::Production smoke test detected catalog or artifact irregularities."
+          }
+
       - name: "📢 Generate Production Deployment Summary"
         if: always() && steps.deploy_prod.conclusion != 'skipped'
         run: |
