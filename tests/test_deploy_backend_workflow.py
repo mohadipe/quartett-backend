@@ -88,6 +88,10 @@ class TestDeployBackendWorkflow(unittest.TestCase):
             "Staging job must start local Supabase instance for tests.",
         )
         self.assertTrue(
+            any("supabase test db supabase/tests/contracts" in run for run in step_runs),
+            "Staging job must run pgTAP contract regression tests.",
+        )
+        self.assertTrue(
             any("supabase test db" in run for run in step_runs),
             "Staging job must run pgTAP db tests.",
         )
@@ -134,6 +138,10 @@ class TestDeployBackendWorkflow(unittest.TestCase):
         self.assertTrue(
             any("supabase start" in run for run in step_runs),
             "Production job must start local Supabase instance for tests.",
+        )
+        self.assertTrue(
+            any("supabase test db supabase/tests/contracts" in run for run in step_runs),
+            "Production job must run pgTAP contract regression tests.",
         )
         self.assertTrue(
             any("supabase test db" in run for run in step_runs),

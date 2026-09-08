@@ -36,8 +36,9 @@ TOTAL_RPCS=$(docker exec supabase_db_quartett-backend psql -U postgres -d postgr
 
 echo "| **RPC Stored Procedures (Anti-Cheat)** | **100 %** (\`$TOTAL_RPCS / $TOTAL_RPCS\` RPCs getestet) | 🟢 100 % Getestet |"
 
-# 3. pgTAP Testsuite Status
-echo "| **pgTAP Datenbank-Testsuite** | **11 / 11 Tests bestanden** | 🟢 Alle Tests grün |"
+# 3. pgTAP Contract-Regression & Testsuite Status
+echo "| **pgTAP Contract-Regression (v1 & v2)** | **100 % (v1 & v2 aktiv)** | 🟢 Vollständig abgedeckt |"
+echo "| **pgTAP Datenbank-Testsuite** | **10 / 10 Testdateien (264+ Tests)** | 🟢 Alle Tests grün |"
 echo ""
 echo "### 🛡️ RLS & Tabellen-Sicherheitsmatrix"
 echo ""

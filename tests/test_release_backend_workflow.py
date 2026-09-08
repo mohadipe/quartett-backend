@@ -97,6 +97,10 @@ class TestReleaseBackendWorkflow(unittest.TestCase):
 
         # 2. Test execution before release
         self.assertTrue(
+            any("supabase test db supabase/tests/contracts" in run for run in step_runs),
+            "Must run pgTAP contract regression tests before releasing.",
+        )
+        self.assertTrue(
             any("supabase test db" in run for run in step_runs),
             "Must run supabase test db before releasing.",
         )
