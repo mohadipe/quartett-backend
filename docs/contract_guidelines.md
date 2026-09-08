@@ -46,6 +46,7 @@ Alle serverseitigen Stored Procedures tragen ein Versionssuffix `_v1`:
 | RPC-Funktion (v1 Standard) | Alias-Wrapper | Beschreibung |
 | :--- | :--- | :--- |
 | `check_app_version_v1(...)` | `check_app_version` | Prüft Client-Version gegen Policy (Update-Pflicht/Wartung) |
+| `health_check_v1()` | `health_check` | Schlanker Healthcheck zur Prüfung von DB-Status & Backend-Version |
 | `claim_reward_v1(...)` | `claim_match_reward_v1`, `rpc_claim_match_reward_v1` | Match-Belohnung verbuchen (XP, Level, Coins) |
 | `purchase_cosmetic_v1(...)` | `rpc_purchase_cosmetic_v1` | Kosmetik-Gegenstand atomar erwerben |
 | `merge_guest_data_v1(...)` | `rpc_merge_guest_data_v1` | Gast-Daten nach Login migrieren |
