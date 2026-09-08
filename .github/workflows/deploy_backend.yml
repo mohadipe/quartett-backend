@@ -64,7 +64,7 @@ jobs:
             exit 1
           fi
 
-          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_STAGING" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_STAGING" | tr -d '[:space:]"' | sed -E 's#^https?://##' | sed -E 's#\.supabase\.(co|in).*##' | tr -d '/')
           echo "🔗 Linking to Supabase Staging project ($CLEAN_REF)..."
           if [ -n "$SUPABASE_DB_PASSWORD" ]; then
             supabase link --project-ref "$CLEAN_REF" --password "$SUPABASE_DB_PASSWORD" --debug
@@ -146,7 +146,7 @@ jobs:
             exit 1
           fi
 
-          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's#^https?://##' | sed -E 's#\.supabase\.(co|in).*##' | tr -d '/')
           echo "🔗 Linking to Supabase Production project ($CLEAN_REF)..."
           if [ -n "$SUPABASE_DB_PASSWORD" ]; then
             supabase link --project-ref "$CLEAN_REF" --password "$SUPABASE_DB_PASSWORD" --debug
@@ -182,7 +182,7 @@ jobs:
         id: deploy_prod
         run: |
           echo "=== 🚀 Starting Production Database Deployment ==="
-          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's#^https?://##' | sed -E 's#\.supabase\.(co|in).*##' | tr -d '/')
           echo "📤 Applying migrations via supabase db push to ($CLEAN_REF)..."
           set -o pipefail
           if supabase db push --help 2>&1 | grep -q -- '--project-ref'; then
