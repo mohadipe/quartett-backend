@@ -31,7 +31,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING || secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF_STAGING: ${{ secrets.SUPABASE_PROJECT_REF_STAGING || vars.SUPABASE_PROJECT_REF_STAGING }}
+      SUPABASE_PROJECT_REF_STAGING: ${{ vars.SUPABASE_PROJECT_REF_STAGING || secrets.SUPABASE_PROJECT_REF_STAGING }}
     steps:
       - name: "📥 Checkout Code"
         uses: actions/checkout@v4
@@ -64,17 +64,18 @@ jobs:
             exit 1
           fi
 
-          echo "🔗 Linking to Supabase Staging project ($SUPABASE_PROJECT_REF_STAGING)..."
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_STAGING" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          echo "🔗 Linking to Supabase Staging project ($CLEAN_REF)..."
           if [ -n "$SUPABASE_DB_PASSWORD" ]; then
-            supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING" --password "$SUPABASE_DB_PASSWORD"
+            supabase link --project-ref "$CLEAN_REF" --password "$SUPABASE_DB_PASSWORD" --debug
           else
-            supabase link --project-ref "$SUPABASE_PROJECT_REF_STAGING"
+            supabase link --project-ref "$CLEAN_REF" --debug
           fi
 
           echo "📤 Applying migrations via supabase db push..."
           set -o pipefail
           if supabase db push --help 2>&1 | grep -q -- '--project-ref'; then
-            supabase db push --project-ref "$SUPABASE_PROJECT_REF_STAGING" 2>&1 | tee /tmp/supabase_push_staging.log
+            supabase db push --project-ref "$CLEAN_REF" 2>&1 | tee /tmp/supabase_push_staging.log
           else
             supabase db push 2>&1 | tee /tmp/supabase_push_staging.log
           fi
@@ -112,7 +113,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD || secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF_PROD: ${{ secrets.SUPABASE_PROJECT_REF_PROD || vars.SUPABASE_PROJECT_REF_PROD }}
+      SUPABASE_PROJECT_REF_PROD: ${{ vars.SUPABASE_PROJECT_REF_PROD || secrets.SUPABASE_PROJECT_REF_PROD }}
     steps:
       - name: "📥 Checkout Code"
         uses: actions/checkout@v4
@@ -145,11 +146,12 @@ jobs:
             exit 1
           fi
 
-          echo "🔗 Linking to Supabase Production project ($SUPABASE_PROJECT_REF_PROD)..."
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          echo "🔗 Linking to Supabase Production project ($CLEAN_REF)..."
           if [ -n "$SUPABASE_DB_PASSWORD" ]; then
-            supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD" --password "$SUPABASE_DB_PASSWORD"
+            supabase link --project-ref "$CLEAN_REF" --password "$SUPABASE_DB_PASSWORD" --debug
           else
-            supabase link --project-ref "$SUPABASE_PROJECT_REF_PROD"
+            supabase link --project-ref "$CLEAN_REF" --debug
           fi
 
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -180,10 +182,11 @@ jobs:
         id: deploy_prod
         run: |
           echo "=== 🚀 Starting Production Database Deployment ==="
-          echo "📤 Applying migrations via supabase db push..."
+          CLEAN_REF=$(echo "$SUPABASE_PROJECT_REF_PROD" | tr -d '[:space:]"' | sed -E 's|^https?://||' | sed -E 's|\.supabase\.(co|in).*||')
+          echo "📤 Applying migrations via supabase db push to ($CLEAN_REF)..."
           set -o pipefail
           if supabase db push --help 2>&1 | grep -q -- '--project-ref'; then
-            supabase db push --project-ref "$SUPABASE_PROJECT_REF_PROD" 2>&1 | tee /tmp/supabase_push_prod.log
+            supabase db push --project-ref "$CLEAN_REF" 2>&1 | tee /tmp/supabase_push_prod.log
           else
             supabase db push 2>&1 | tee /tmp/supabase_push_prod.log
           fi
