@@ -17,9 +17,15 @@ Backend- und Cloud-Infrastruktur Repository für die **Quartett & Supertrumpf Ap
 quartett-backend/
 ├── .github/workflows/
 │   ├── backend_ci.yml        # Automatisierte pgTAP Tests bei Pull Request & Push
-│   └── deploy_backend.yml    # CI/CD Release-Pipeline für Staging & Production
+│   ├── deploy_backend.yml    # CI/CD Deployment-Pipeline für Staging & Production
+│   └── release_backend.yml   # Automatisierte Versionierung & Release-Pipeline
+├── scripts/
+│   ├── generate_backend_summary.sh     # RLS & Testabdeckungs-Report
+│   └── generate_release_changelog.py   # SemVer Bumping & Conventional Changelog Generator
 ├── tests/
-│   └── test_deploy_backend_workflow.py # Testsuite für die CI/CD Pipeline
+│   ├── test_deploy_backend_workflow.py    # Testsuite für die CI/CD Pipeline
+│   ├── test_generate_release_changelog.py # Testsuite für Versionierung & Changelog
+│   └── test_release_backend_workflow.py   # Testsuite für den Release-Workflow
 └── supabase/
     ├── config.toml           # Supabase CLI Konfiguration
     ├── migrations/           # SQL Tabellen, RLS Policies & RPC Funktionen
@@ -77,6 +83,24 @@ Das Backend wird über GitHub Actions vollautomatisiert und unabhängig vom Fron
   4. **Artifact-Archivierung:** Speicherung des Backups als GitHub Actions Run Artifact mit 90 Tagen Aufbewahrungsdauer.
   5. **Sicheres Deployment:** Aufspielen aller offenen Migrationen via `supabase db push --project-ref $SUPABASE_PROJECT_REF_PROD`.
   6. Detaillierte Step Summary mit Backup- und Migrationsstatus.
+
+### 🚀 Automatisierter Release- & Versionierungs-Workflow (`release_backend.yml`)
+
+Für Backend-Releases steht ein dedizierter GitHub Actions Workflow zur Verfügung, der Releases semantisch versioniert, Release Notes generiert, Git-Tags setzt und nahtlos das Production Deployment anstößt:
+
+* **Trigger:** Manueller Start via `workflow_dispatch` auf `main`.
+* **Parameter:**
+  - `bump_type`: Versionssprung (`patch`, `minor`, `major`, `auto` [Conventional Commits Erkennung], `custom`).
+  - `custom_version`: Spezifische Zielversion (falls `bump_type = custom`).
+  - `custom_notes`: Optionale individuelle Release Notes.
+  - `trigger_deploy`: Automatisches Anstoßen von `deploy_backend.yml` auf Production (Standard: `true`).
+* **Ablauf:**
+  1. **Safety Gate:** Ausführung der pgTAP-Datenbanktests (`supabase test db`) und Python-Workflow-Tests (`python3 -m unittest discover tests`).
+  2. **SemVer Bumping:** Ermittlung des letzten Tags (`backend-v*`) und Berechnung der neuen Version (`0.9.1`, `0.10.0`, etc.).
+  3. **Changelog & Release Notes:** Automatisierte Kategorisierung von Commits nach Conventional Commits (Datenbank, Edge Functions, RLS, Features, Fixes) und Auflistung geänderter Migrationsdateien.
+  4. **Git Tagging:** Erstellung und Push des annotierten Tags `backend-vX.Y.Z`.
+  5. **GitHub Release:** Veröffentlichung des offiziellen GitHub Releases mit Changelog.
+  6. **Production Deployment Trigger:** Automatisches Triggern der `deploy_backend.yml` Pipeline für das neue Tag mit `environment=production`.
 
 ### 🔐 Erforderliche GitHub Secrets & Variablen
 | Secret / Variable | Beschreibung |
