@@ -28,6 +28,7 @@ Alle Datenbankabfragen (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) der App erfolgen
 | :--- | :--- | :--- | :--- |
 | **Spielerprofile** | `public.v1_player_profiles` | `public.v1_profiles` | `public.profiles` |
 | **Katalog-Decks** | `public.v1_catalog_decks` | `public.v1_decks` | `public.decks` |
+| **Community-Decks (UGC)** | `public.community_decks` | - | `public.decks` |
 | **Karten** | `public.v1_cards` | `public.v1_deck_cards` | `public.cards` |
 | **Nutzer-Inventar** | `public.v1_user_inventory_decks` | - | `public.user_inventory_decks` |
 | **Matches (Lobby/Live)**| `public.v1_matches` | - | `public.matches` |
