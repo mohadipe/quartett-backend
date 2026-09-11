@@ -52,13 +52,13 @@ SELECT columns_are('public', 'v1_profiles', ARRAY[
 SELECT columns_are('public', 'v1_catalog_decks', ARRAY[
     'id', 'slug', 'name', 'category', 'description', 'cover_image_url',
     'price_coins', 'is_official', 'is_community', 'creator_id',
-    'review_status', 'attribute_definitions', 'created_at'
+    'review_status', 'attribute_definitions', 'created_at', 'language'
 ], 'v1_catalog_decks besitzt exakt die v1-Vertragsspalten');
 
 SELECT columns_are('public', 'v1_decks', ARRAY[
     'id', 'slug', 'name', 'category', 'description', 'cover_image_url',
     'price_coins', 'is_official', 'is_community', 'creator_id',
-    'review_status', 'attribute_definitions', 'created_at'
+    'review_status', 'attribute_definitions', 'created_at', 'language'
 ], 'v1_decks besitzt exakt die v1-Vertragsspalten');
 
 SELECT columns_are('public', 'v1_cards', ARRAY[

@@ -40,7 +40,7 @@ SELECT columns_are('public', 'v1_player_profiles', ARRAY[
 SELECT columns_are('public', 'v1_catalog_decks', ARRAY[
     'id', 'slug', 'name', 'category', 'description', 'cover_image_url',
     'price_coins', 'is_official', 'is_community', 'creator_id',
-    'review_status', 'attribute_definitions', 'created_at'
+    'review_status', 'attribute_definitions', 'created_at', 'language'
 ], 'v1_catalog_decks bleibt strikt auf v1 isoliert und leckt keine v2-Spalten');
 
 SELECT columns_are('public', 'v1_matches', ARRAY[
